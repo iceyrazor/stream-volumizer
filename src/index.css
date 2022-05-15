@@ -1,0 +1,128 @@
+#raw_json{
+	display: none;
+	overflow-y: scroll;
+	height: 400px;
+	width: 90%;
+	border: 2px solid black;
+	white-space: pre-wrap;
+}
+
+
+#volumes_control{
+	position: relative;
+	overflow-y: scroll;
+	max-width: 600px;
+	height: 500px;
+	border: 2px solid black;
+	padding: 10px;
+}
+#volumes_control > div{
+	display: flex;
+	background-color: rgb(230,230,230);
+	margin-bottom: 3px;
+	align-content: flex-start;
+	justify-content: center;
+	grid-gap: 3px;
+	padding: 3px;
+}
+#volumes_control textarea{
+	border: 2px inset rgb(120,120,120);
+	font-size: 15px;
+	width: 180px;
+	height: 15px;
+	resize: none;
+	overflow: hidden;
+}
+#volumes_control button{
+	height: 20px;
+	min-width: 20px;
+	align-items: center;
+	justify-items: center;
+}
+#volume_wrap{
+	position: relative;
+	max-width: 600px;
+}
+#vol_update_button{
+	background-color: rgb(200,200,200);
+	border: 2px solid black;
+	position: absolute;
+	display: block;
+	width: 100px;
+	height: 15px;
+	padding: 3px;
+	bottom: 3px;
+	left: calc(50% - 50px);
+	user-select: none;
+}
+#vol_update_button:hover{
+	background-color: rgb(190,190,190);
+}
+
+.vol_update_button_tooltip{
+	visibility: hidden;
+	position: absolute;
+	width: 120px;
+	left: calc(50% - (120px/2));
+	bottom: 50px;
+	border: 2px solid black;
+	padding: 3px;
+	background-color: rgb(260,260,260);
+	border-radius: 10px;
+}
+.vol_update_button_wrap:hover .vol_update_button_tooltip{
+	visibility: visible;
+}
+
+#vol_add_button{
+	background-color: rgb(200,200,200);
+	border: 2px solid black;
+	position: absolute;
+	display: block;
+	width: 50px;
+	height: 15px;
+	padding: 3px;
+	bottom: 3px;
+	left: 65%;
+	user-select: none;
+}
+
+
+.play_grid,.show_grid{
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	border: 2px solid black;
+	padding: 4px;
+}
+#airtime_next,#airtime_next_show{
+	border-left: 2px dashed rgb(120,120,120);
+	padding-left: 10px;
+}
+#airtime_np,#airtime_np_show{
+	padding-right: 5px;
+}
+
+#move_button{
+	position: absolute;
+	padding: 3px;
+	top: 5px;
+	right: 5px;
+	user-select: none;
+	border: 2px solid black;
+}
+
+#background_plate{
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	width: 100vw;
+	height: 100vh;
+	background-color: rgba(255,255,255,1);
+	z-index: -1;
+}
+
+#error_box{
+	display: none;
+	padding: 4px;
+	background-color: rgba(255,50,50);
+}

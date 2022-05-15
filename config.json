@@ -1,0 +1,49 @@
+{
+  "airtime_data": {
+    "stream_url": "https://radiosidewinder.out.airtime.pro:8000/radiosidewinder_b?_ga=1.133037898.513622194.1447957646/;stream.mp3",
+    "api_url": "https://radiosidewinder.airtime.pro/api/live-info?type=interval&limit=5&_=1646343267200"
+  },
+  "volumes": [
+    {
+      "default": 0.15
+    },
+    {
+      "lookfor": [
+        [
+          "currentShow",
+          0,
+          "name"
+        ],
+        "Galnet News"
+      ],
+      "volume": 0.3
+    },
+    {
+      "lookfor": [
+        [
+          "currentShow",
+          0,
+          "name"
+        ],
+        "Clan Ads"
+      ],
+      "volume": 0.3
+    },
+    {
+      "lookfor": [
+        [
+          "currentShow",
+          0,
+          "name"
+        ],
+        "Commercial Break"
+      ],
+      "volume": 0.05
+    }
+  ],
+  "read_cmd_file": "false",
+  "default_size": [
+    0,
+    0
+  ]
+}

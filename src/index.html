@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title></title>
+	<link rel="stylesheet" href="index.css">
+</head>
+<body>
+	<div id="background_plate"></div>
+	<div id="error_box"></div>
+
+	<audio controls="controls" id="airtime_radio"></audio>
+	<div id="move_button">click to drag</div>
+
+	<div class="play_grid">
+		<div id="airtime_np"></div>
+		<div id="airtime_next"></div>
+	</div>
+	<div class="show_grid">
+		<div id="airtime_np_show"></div>
+		<div id="airtime_next_show"></div>
+	</div>
+	<div id="curr_date"></div>
+
+	<br>
+	<p>volumes for different things</p>
+	<div id="volume_wrap">
+		<div id="volumes_control"></div>
+		<div class="vol_update_button_wrap">
+			<div align="center" id="vol_update_button" onClick="update_conf()">
+				update
+			</div>
+			<span class="vol_update_button_tooltip">please dont spam this button</span>
+			<div align="center" id="vol_add_button" onClick="add_conf()">add</div>
+		</div>
+	</div>
+
+	<br><br>
+	<button onclick="toggle_raw_json()">toggle raw json data</button><br><br>
+	<div id="raw_json"></div>
+
+	<script language="javascript">
+		const fs=require('fs'),
+			path=require("path"),
+			{ipcRenderer}=require('electron');
+
+		//error box func
+		function set_error_box(err){
+			error_box.style.display="block";
+			error_box.innerHTML=err
+		}
+		
+		//fetch config
+		let config_data={}
+		function fetch_config(){
+			try{
+				config_data=JSON.parse(fs.readFileSync(path.join(__dirname,"..","config.json")));
+				config_data["error"]=false
+			} catch(err){
+				config_data={err:err.toString(),"error":true}
+				set_error_box("config error:: "+err)
+				return 
+			}
+			airtime_radio.innerHTML='<source src="'+config_data["airtime_data"]["stream_url"]
+			+'" type="audio/mp3">Your browser does not support the audio element.'
+
+			volumes_str=""
+			for(let i in config_data.volumes){
+				if(!config_data.volumes[i].default){
+					volumes_str+='<div id="volumes_control_'+i+'">'+
+					'<textarea style="resize: vertical;"></textarea> name:<textarea></textarea>volume: <input type="number" min="0" max="1"></input>'+
+					'<button onclick="move_conf_vol('+i+',\'+\')">+</button>'+
+					'<button onclick="move_conf_vol('+i+',\'-\')">-</button>'+
+					'<button onclick="del_conf('+i+')">del</button>'+
+					'</div>'
+					setTimeout(()=>{
+						document.getElementById("volumes_control_"+i).children[0].value=config_data.volumes[i].lookfor[0]
+						document.getElementById("volumes_control_"+i).children[1].value=config_data.volumes[i].lookfor[1]
+						document.getElementById("volumes_control_"+i).children[2].value=config_data.volumes[i].volume
+					},250)
+				} else {
+					volumes_str+='<div id="volumes_control_'+i+'">'+'default: <textarea></textarea></div>'
+					setTimeout(()=>{
+						document.getElementById("volumes_control_"+i).children[0].value=config_data.volumes[i].default
+					},250)
+				}
+			}
+			volumes_str+='<div id="spacer" style="background-color: rgba(0,0,0,0); margin-bottom: 20px"></div>'
+			volumes_control.innerHTML=volumes_str
+		}
+		console.log(fetch_config());
+
+		//move volume config
+		function move_conf_vol(id,dir){
+			if(dir=="+"){
+				arraymove(config_data.volumes,id,id-1)
+			}
+			if(dir=="-"){
+				arraymove(config_data.volumes,id,id+1)
+			}
+			if(config_data.volumes[1].default){
+				arraymove(config_data.volumes,1,0)
+			}
+			fs.writeFileSync(path.join(__dirname,"..","config.json"),JSON.stringify(config_data,null,2))
+			fetch_config()
+		}
+
+		//misc function to move arrays via index to index
+		function arraymove(arr, fromIndex, toIndex) {
+		    let element = arr[fromIndex];
+		    arr.splice(fromIndex, 1);
+		    arr.splice(toIndex, 0, element);
+		    return arr
+		}
+
+		//edit config
+		function update_conf(){
+			for(i in config_data.volumes){
+				if(config_data.volumes[i].default){
+					config_data.volumes[i].default=volumes_control.children[i].children[0].value
+				} else {
+					config_data.volumes[i].lookfor[0]=volumes_control.children[i].children[0].value.split(",")
+					config_data.volumes[i].lookfor[1]=volumes_control.children[i].children[1].value
+					config_data.volumes[i].volume=parseFloat(volumes_control.children[i].children[2].value)
+				}
+
+			}
+			fs.writeFileSync(path.join(__dirname,"..","config.json"),JSON.stringify(config_data,null,2))
+			fetch_config()
+			fetch_api_data()
+		}
+
+		//del config
+		function del_conf(id){
+			config_data.volumes.splice(id,1)
+			fs.writeFileSync(path.join(__dirname,"..","config.json"),JSON.stringify(config_data,null,2))
+			fetch_config()
+			fetch_api_data()
+		}
+
+		//addconf
+		function add_conf(){
+			config_data.volumes.push({"lookfor":[["currentShow",0,"name"],"n/a"],"volume":0.5})
+			fs.writeFileSync(path.join(__dirname,"..","config.json"),JSON.stringify(config_data,null,2))
+			fetch_config()
+			fetch_api_data()
+		}
+
+		//fetch api data and use it??
+		async function fetch_api_data(){
+			if(config_data["airtime_data"]["api_url"]&&config_data["airtime_data"]["api_url"]!=""){
+			await fetch(config_data["airtime_data"]["api_url"],{cache:"no-cache"})
+			.then(res=>res.json())
+			.then(res=>{
+				api_data=res;
+				raw_json.innerHTML=JSON.stringify(res, null, 4); //put in the raw json data in json box
+				np_next(res)
+				//set volume based on "volumes" config
+				set_volume(res)
+				set_date();
+			});
+				return true
+			} else {
+				return "api not set"
+			}
+		}
+		
+		//this loop is set seperately so the fetch api could be called seperately on song changes
+		//please do not change the timeout, the api it fetches is not mine, no need to spam it
+		function loop_fetch_api_data(){
+			if(config_data["error"]==false){
+				fetch_api_data()
+				.then(res=>{
+					if(res=="api not set"){
+						set_error_box("api not set")
+					} else {
+						setTimeout(loop_fetch_api_data,13000)
+					}
+				})
+			}
+		}
+		loop_fetch_api_data()
+
+
+		function set_date(){
+			let date=new Date();
+			let dateconstruct=date.getUTCFullYear()+"-"+(date.getUTCMonth()+1)+"-"+(date.getUTCDay()-1)+" "+date.getUTCHours()+
+			":"+date.getUTCMinutes()+":"+date.getUTCSeconds()+" UTC";
+			curr_date.innerHTML=dateconstruct
+		}
+
+		function np_next(data){
+			airtime_np.innerHTML="<h1>now playing</h1>"+
+			"<p>track</p>"+data["current"]["name"]
+
+			airtime_next.innerHTML="<h1>next</h1>"+
+			"<p>track</p>"+data["next"]["name"]
+
+			airtime_np_show.innerHTML="<h1>current show</h1>"+
+			data["currentShow"][0]["name"]
+
+			airtime_next_show.innerHTML="<h1>next show</h1>"+
+			data["nextShow"][0]["name"]+'<p>starts at</p>'+data["nextShow"][0]["start_timestamp"]+
+			'<span style="padding:4px"></span>'+data["timezone"]
+		}
+
+		function toggle_raw_json(){
+			if(getComputedStyle(raw_json).display=="none"){
+				raw_json.style.display="block"
+			} else {
+				raw_json.style.display="none"
+			}
+		}
+
+		function set_volume(data){
+			for(elem of document.getElementById("volumes_control").children){
+				if(elem.id!="update_button"&elem.id!="spacer"){
+					elem.style.backgroundColor="rgb(230,230,230)"
+				}
+			}
+
+			for(vol in config_data.volumes){
+				if(!config_data.volumes[vol].default){
+
+					if(config_data.volumes[vol].lookfor[0]){
+						if(getNested(data,config_data.volumes[vol].lookfor[0]).includes(config_data.volumes[vol].lookfor[1])){
+							airtime_radio.volume=config_data.volumes[vol].volume
+							document.getElementById('volumes_control_'+(vol)).style.backgroundColor="rgb(0,255,0)"
+							return
+						}
+					}
+				}
+			}
+			airtime_radio.volume=config_data.volumes[0].default
+			document.getElementById('volumes_control_0').style.backgroundColor="rgb(0,255,0)"
+		}
+
+		function getNested(obj, arr) {
+		  	const keys=[...arr];
+			if (keys.length === 0) return obj;
+
+		  	if(obj[keys[0]]){
+				return getNested(obj[keys.shift()], keys)
+		  	} else {
+		  		return undefined
+		  	}
+		}
+
+
+		//move window with cursor bs because electron doesnt have this >:(
+		move_button.addEventListener("mousedown",(eve)=>{
+			ipcRenderer.send("setpos",{x:eve.clientX,y:eve.clientY})
+		})
+		move_button.addEventListener("mouseup",(eve)=>{
+			ipcRenderer.send("stoppos",{})
+		})
+	</script>
+</body>
+</html>

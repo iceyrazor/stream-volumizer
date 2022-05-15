@@ -1,0 +1,20 @@
+{
+  "name": "stream-volumizer",
+  "version": "0.0.0",
+  "description": "a little peice of software that allows you to have differnt volume levels during different parts of a Airtime stream",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "keywords": [
+    "volume",
+    "auto",
+    "control"
+  ],
+  "author": "iceyrazor",
+  "license": "",
+  "dependencies": {
+    "electron": "^17.1.0"
+  }
+}
